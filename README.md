@@ -8,5 +8,5 @@ This project iterates over the daily OHLCV of BITCOIN from 2020-01-01 until 2025
 
 <p align="center">
 <br/>
-<img src="https://i.imgur.com/EVjXZvH.png"/>
+<img src="https://i.imgur.com/UUu8qMz.png"/>
 <br />
