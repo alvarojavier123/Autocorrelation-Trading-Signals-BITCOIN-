@@ -13,8 +13,6 @@ import datetime as dt
 
 data = pd.read_csv('BTC_USDT_1d_since_2020.csv')
 data.index = pd.to_datetime(data['timestamp'])
-#data.index = data.index.tz_localize('UTC').tz_convert('America/Bogota')
-
 data = data.drop('timestamp', axis=1)
 
 
@@ -84,29 +82,6 @@ for i in data.index:
             
         """
             
-            
-         
-
-        """
-        # Linearly fitting the lagged correlation data
-        m = np.polyfit(ts[0:-1],ts[1:],1)
-
-        # Creating x-values for the fit
-        xx = ts[0:-1]
-
-        # Calculating the y-values from the x-values
-        # and the fitting parameters m
-        yy = np.polyval(m,xx)
-
-        # Plotting the regression line
-        plt.plot(xx,yy)
-
-        # Set the title and labels and their sizes
-        plt.title('SPY Current Vs Past Returns', fontsize=16)
-        plt.xlabel('Previous Day Returns', fontsize=14)
-        plt.ylabel('Current Day Returns', fontsize=14)
-        plt.show()
-        """
 
 signals.to_csv(f'long-signals.csv')
         
