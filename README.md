@@ -1,1 +1,1 @@
-# Autocorrelation-Trading-Signals-BITCOIN-
+# Autocorrelation Trading Signals (BITCOIN)
