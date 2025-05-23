@@ -12,5 +12,5 @@ The corresponding backtest is done in the file BACKTEST.py
 
 <p align="center">
 <br/>
-<img src="https://i.imgur.com/mb1ViHO.png"/>
+<img src="https://i.imgur.com/noh7GP7.png"/>
 <br />
