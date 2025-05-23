@@ -18,13 +18,14 @@ data = data.drop('timestamp', axis=1)
 
 
 signals = pd.DataFrame(columns=['BTC', 'Price'], index=data.index)
+lookback = 30
 
 for i in data.index:
 
     if i == dt.datetime(2025,5,10): # MAKE SURE STOP ITERATING SPECIFIC DATE.
         break
 
-    if i > data.index[0] + dt.timedelta(days=30):
+    if i > data.index[0] + dt.timedelta(days=lookback):
         time = i
         print("TIME = ", time.strftime('%Y-%m-%d'))
 
