@@ -41,6 +41,8 @@ def getReturns(position, time, hold, stop_loss):
 
     
     if position == -1:
+                slippage_cost = entry_price * 0.0005    
+                entry_price = entry_price - slippage_cost
 
                 stop_loss = entry_price*(1+stop_loss)
                 for i in trade.index:
@@ -59,6 +61,8 @@ def getReturns(position, time, hold, stop_loss):
                 return returns, entry_time, entry_price, exit_time, exit_price, signal
             
     elif position == 1:
+                slippage_cost = entry_price * 0.0005
+                entry_price = entry_price + slippage_cost
 
                 stop_loss = entry_price*(1-stop_loss)
                 for i in trade.index:
@@ -82,8 +86,8 @@ def getReturns(position, time, hold, stop_loss):
 strategy_returns  = pd.DataFrame(columns=['entry time', 'exit time', 'entry price', 'exit price', 'position', 'returns'])
 exit_time = signals['timestamp'].loc[0]
 
-hold = 240
-stop_loss = 0.01
+hold = 240 # HOLDING PERIOD IN HOURS
+stop_loss = 0.01 # STOP LOSS
 print("exit time initial = ", exit_time)
 
 for day in signals.index:
@@ -135,34 +139,127 @@ for day in signals.index:
         """
     print("-------------------------------------------------------------------")
 
+import plotly.graph_objects as go
 
-strategy_returns = strategy_returns.dropna()
+
 strategy_returns['cumsum returns'] = strategy_returns['returns'].cumsum()
 strategy_returns['cumulative returns'] = (1 + strategy_returns['returns']).cumprod()
 print(strategy_returns)
 
-compound_returns = (strategy_returns['returns']+1).cumprod()
-#print('compound returns = ', compound_returns)
-total_returns = (compound_returns.iloc[-1]-1)*100
-print('The total returns from strategy {:,.2f}% '.format(total_returns))
-print('Max returns =', compound_returns.max())
+strategy_returns['entry time'] = pd.to_datetime(strategy_returns['entry time'])
+strategy_returns['exit time'] = pd.to_datetime(strategy_returns['exit time'])
+strategy_returns = strategy_returns.sort_values('entry time').reset_index(drop=True)
 
-running_max = np.maximum.accumulate(compound_returns).dropna()
-running_max[running_max < 1] = 1
-drawdown = (compound_returns)/running_max - 1
-max_dd = drawdown.min()*100
-print('The maximum drawdown is %.2f' % max_dd)
+compounded_returns = (1 + strategy_returns['returns']).prod() - 1
+simple_returns = strategy_returns['returns'].sum()
+cumulative_compounded = (1 + strategy_returns['returns']).cumprod()
+cumulative_simple = strategy_returns['returns'].cumsum()
 
-# Plot the cumulative strategy returns
-#daily_returns['returns'].cumsum().plot(figsize=(10, 7))
-(strategy_returns['returns']+1).cumprod().plot(figsize=(10, 7))
-plt.xlabel('Date')
-plt.ylabel('Strategy Returns (%)')
-plt.show()
+running_max = cumulative_compounded.cummax()
+drawdown = (cumulative_compounded - running_max) / running_max
+max_drawdown = drawdown.min()
 
-strategy_returns['returns'].cumsum().plot(figsize=(10, 7))
-plt.xlabel('Date')
-plt.ylabel('Strategy Returns (%)')
-plt.show()
-  
+avg_trade_days = (strategy_returns['exit time'] - strategy_returns['entry time']).dt.days.mean()
+avg_trade_days = avg_trade_days if avg_trade_days > 0 else 1
+daily_returns = strategy_returns['returns'] / avg_trade_days
+annualized_return = (1 + compounded_returns) ** (252 / (avg_trade_days * len(strategy_returns))) - 1
+annualized_volatility = daily_returns.std() * np.sqrt(252)
+sharpe_ratio = annualized_return / annualized_volatility if annualized_volatility != 0 else np.nan
 
+win_rate = (strategy_returns['returns'] > 0).mean()
+gross_profit = strategy_returns.loc[strategy_returns['returns'] > 0, 'returns'].sum()
+gross_loss = abs(strategy_returns.loc[strategy_returns['returns'] <= 0, 'returns'].sum())
+profit_factor = gross_profit / gross_loss if gross_loss != 0 else np.nan
+
+# --- Crear figura interactiva ---
+
+fig = go.Figure()
+
+# Línea de Retornos Compuestos
+fig.add_trace(go.Scatter(
+    x=strategy_returns['exit time'],
+    y=cumulative_compounded,
+    mode='lines',
+    name='Compounded Returns ($)',
+    line=dict(color='blue')
+))
+
+# Línea de Retornos Simples acumulados
+fig.add_trace(go.Scatter(
+    x=strategy_returns['exit time'],
+    y=cumulative_simple,
+    mode='lines',
+    name='Simple Returns (Cumsum)',
+    line=dict(color='green', dash='dash')
+))
+
+# Área de Drawdown
+fig.add_trace(go.Scatter(
+    x=strategy_returns['exit time'],
+    y=drawdown,
+    mode='lines',
+    fill='tozeroy',
+    name='Drawdown',
+    line=dict(color='red'),
+    fillcolor='rgba(255, 0, 0, 0.3)',
+    yaxis='y2'
+))
+
+# Layout con doble eje Y
+fig.update_layout(
+    title=f"Strategy Performance from {strategy_returns['entry time'].min().date()} to {strategy_returns['exit time'].max().date()}",
+    xaxis_title='Date',
+    yaxis=dict(
+        title='Returns',
+        side='left'
+    ),
+    yaxis2=dict(
+        title='Drawdown',
+        overlaying='y',
+        side='right',
+        showgrid=False,
+        tickformat=".0%",
+        range=[min(drawdown)*1.1, 0]
+    ),
+    legend=dict(x=0.01, y=0.99),
+    hovermode='x unified',
+    margin=dict(l=60, r=60, t=60, b=60),
+    height=600
+)
+
+# Añadir cuadro con métricas como anotación en la gráfica
+metrics_text = (
+    f"Compounded Returns: {compounded_returns:.2%}\n"
+    f"Simple Returns: {simple_returns:.2%}\n"
+    f"Max Drawdown: {max_drawdown:.2%}\n"
+    f"Sharpe Ratio: {sharpe_ratio:.2f}\n"
+    f"Win Rate: {win_rate:.2%}\n"
+    f"Profit Factor: {profit_factor:.2f}"
+)
+
+fig.add_annotation(
+    xref='paper', yref='paper',
+    x=0.5, y=0.98,  # Top center
+    xanchor='center',
+    showarrow=False,
+    align='left',
+    bgcolor='white',
+    bordercolor='black',
+    borderwidth=1,
+    borderpad=4,
+    text=metrics_text.replace('\n', '<br>'),  # Use <br> for line breaks in HTML
+    font=dict(size=12, color='black', family='Arial Black')  # Strong black font
+)
+
+
+
+import plotly.io as pio
+pio.renderers.default = "browser"
+
+
+
+fig.show()
+
+print("====== Strategy Performance Metrics ======")
+print(metrics_text)
+print("==========================================")
