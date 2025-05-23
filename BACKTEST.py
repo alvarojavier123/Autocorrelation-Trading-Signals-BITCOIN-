@@ -86,8 +86,8 @@ def getReturns(position, time, hold, stop_loss):
 strategy_returns  = pd.DataFrame(columns=['entry time', 'exit time', 'entry price', 'exit price', 'position', 'returns'])
 exit_time = signals['timestamp'].loc[0]
 
-hold = 240 # HOLDING PERIOD IN HOURS
-stop_loss = 0.01 # STOP LOSS
+hold = 480 # HOLDING PERIOD IN HOURS
+stop_loss = 0.08 # STOP LOSS
 print("exit time initial = ", exit_time)
 
 for day in signals.index:
