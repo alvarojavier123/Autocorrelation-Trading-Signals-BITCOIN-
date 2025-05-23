@@ -1,4 +1,4 @@
-# Momentum Trading Strategy (BITCOIN)
+# Autocorrelation Trading Signals Momentum Trading Strategy (BITCOIN)
 
 <h2>Description</h2>
 <br />
