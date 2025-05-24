@@ -9,7 +9,7 @@ On the BACKTEST.py I backtested the strategy, I hardcoded a stop loss at 1% loss
 If you run BACKTEST.py you will see the results at the end in an interactive graph that will show you the details. The long-signals.csv contain the signals with the fixed parameters.
 Different parameters can be used on holding period and stop loss in the BACKTEST.py, for instance a stop loss at 8% and a holding period of 20 days (480 hours) would have given a more aggressive compounded return (screen shot at the end).
 I factored in slippage and transaction costs.
-Also, different lookback periods could be used on trend_autocorrelation.py where the trading signals are calculated.
+Also, different lookback periods could be used on trend_autocorrelation_signals.py where the trading signals are calculated.
 <br />
 
 <h2>STRATEGY LOGIC :</h2>
