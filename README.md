@@ -22,11 +22,11 @@ Also, different lookback periods could be used on trend_autocorrelation_signals.
 <h2>RESULTS WITH FIXED PARAMETERS (1%:STOP LOSS - HOLDING PERIOD:10 DAYS) </h2>
 <p align="center">
 <br/>
-<img src="https://i.imgur.com/mmP2xx8.png"/>
+<img src="https://i.imgur.com/Gjlwaam.png"/>
 <br />
 
 <h2>RESULTS WITH ALTERNATIVE PARAMETERS (8%:STOP LOSS - HOLDING PERIOD:20 DAYS) </h2>
 <p align="center">
 <br/>
-<img src="https://i.imgur.com/nFxd9y6.png"/>
+<https://i.imgur.com/7WdL2q7.png"/>
 <br />
