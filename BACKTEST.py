@@ -8,14 +8,14 @@ import datetime as dt
 
 signals = pd.read_csv('long-signals.csv')
 
+asset_hourly_data = pd.read_csv(f'BTC_USDT_1h_since_2020.csv')
+asset_hourly_data['timestamp'] = pd.to_datetime(asset_hourly_data['timestamp'])
+asset_hourly_data.set_index('timestamp', inplace=True)
+asset_hourly_data = asset_hourly_data.drop('volume', axis=1)
+
 
 def getReturns(position, time, hold, stop_loss):
     print('TIME = ', time)
-    asset_hourly_data = pd.read_csv(f'BTC_USDT_1h_since_2020.csv')
-    asset_hourly_data['timestamp'] = pd.to_datetime(asset_hourly_data['timestamp'])
-    asset_hourly_data.set_index('timestamp', inplace=True)
-    asset_hourly_data = asset_hourly_data.drop('volume', axis=1)
-    #print(asset_hourly_data)
     
     time = dt.datetime.strptime(time, "%Y-%m-%d")
     print('TIME = ', time)
@@ -39,42 +39,49 @@ def getReturns(position, time, hold, stop_loss):
     trade = asset_hourly_data.loc[entry_time:exit_time]
     print(trade)
 
+    spread = 0.0003  # 0.03%
+    fee = 0.0005
     
     if position == -1:
                 slippage_cost = entry_price * 0.0005    
                 entry_price = entry_price - slippage_cost
+                entry_price = entry_price * (1 - spread)
 
                 stop_loss = entry_price*(1+stop_loss)
                 for i in trade.index:
-                    if trade.loc[i].open >=stop_loss or trade.loc[i].high >=stop_loss or trade.loc[i].low >=stop_loss or trade.loc[i].close >=stop_loss:
-            
+                    if trade.loc[i].high >=stop_loss:
+                        
                         returns = pd.Series([stop_loss, entry_price])
                         returns = round(returns.pct_change()[1], 4)  
-                        returns = returns - (returns * 0.0005)
+                        returns = returns - (returns * fee)
                         return returns, entry_time, entry_price, i, stop_loss, signal
                     
-                
+
+                exit_price = exit_price * (1 + spread)
                 returns = pd.Series([exit_price, entry_price])
                 returns = round(returns.pct_change()[1], 4)
-                returns = returns - (returns * 0.0005)
+                returns = returns - (returns * fee)
                      
                 return returns, entry_time, entry_price, exit_time, exit_price, signal
             
     elif position == 1:
                 slippage_cost = entry_price * 0.0005
                 entry_price = entry_price + slippage_cost
+                entry_price = entry_price * (1 + spread)
 
                 stop_loss = entry_price*(1-stop_loss)
                 for i in trade.index:
-                    if trade.loc[i].open <=stop_loss or trade.loc[i].high <=stop_loss or trade.loc[i].low <=stop_loss or trade.loc[i].close <=stop_loss:
+                    if trade.loc[i].low <=stop_loss:
                         returns = pd.Series([entry_price, stop_loss])
                         returns = round(returns.pct_change()[1], 4)
-                        returns = returns - (returns * 0.0005)
+                        returns = returns - (returns * fee)
                         return returns, entry_time, entry_price, i, stop_loss, signal
-                    
+                
+
+                exit_price = exit_price * (1 - spread)
                 returns = pd.Series([entry_price, exit_price])
                 returns = round(returns.pct_change()[1], 4)
-                returns = returns - (returns * 0.0005)
+                returns = returns - (returns * fee)
             
                 return returns, entry_time, entry_price, exit_time, exit_price, signal
 
@@ -86,7 +93,7 @@ def getReturns(position, time, hold, stop_loss):
 strategy_returns  = pd.DataFrame(columns=['entry time', 'exit time', 'entry price', 'exit price', 'position', 'returns'])
 exit_time = signals['timestamp'].loc[0]
 
-hold = 480 # HOLDING PERIOD IN HOURS
+hold =  480 # HOLDING PERIOD IN HOURS
 stop_loss = 0.08 # STOP LOSS
 print("exit time initial = ", exit_time)
 
