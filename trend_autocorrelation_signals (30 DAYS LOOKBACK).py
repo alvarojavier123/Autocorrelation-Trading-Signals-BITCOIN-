@@ -12,7 +12,7 @@ plt.style.use('seaborn-darkgrid')
 import datetime as dt
 
 
-data = pd.read_csv('BTC_USDT_1d_since_2020.csv')
+data = pd.read_csv('BTC_USDT_1d_(2020-2025).csv')
 data.index = pd.to_datetime(data['timestamp'])
 data = data.drop('timestamp', axis=1)
 
@@ -22,7 +22,7 @@ lookback = 30
 
 for i in data.index:
 
-    if i == dt.datetime(2025,5,10): # MAKE SURE STOP ITERATING SPECIFIC DATE.
+    if i == dt.datetime(2025,5,1): # MAKE SURE STOP ITERATING SPECIFIC DATE.
         break
 
     if i > data.index[0] + dt.timedelta(days=lookback):
@@ -64,4 +64,4 @@ for i in data.index:
         
         
 
-signals.to_csv(f'long-signals.csv')
+signals.to_csv(f'long-signals (30 DAYS LOOKBACK).csv')

@@ -6,9 +6,9 @@ pd.set_option("display.max_rows", None)
 import talib as ta
 import datetime as dt
 
-signals = pd.read_csv('long-signals.csv')
+signals = pd.read_csv('long_signal_sweeps/long-signals (29 DAYS LOOKBACK).csv')
 
-asset_hourly_data = pd.read_csv(f'BTC_USDT_1h_since_2020.csv')
+asset_hourly_data = pd.read_csv(f'BTC_USDT_1h_(2024-2025)-TEST.csv')
 asset_hourly_data['timestamp'] = pd.to_datetime(asset_hourly_data['timestamp'])
 asset_hourly_data.set_index('timestamp', inplace=True)
 asset_hourly_data = asset_hourly_data.drop('volume', axis=1)
@@ -21,6 +21,13 @@ def getReturns(position, time, hold, stop_loss):
     print('TIME = ', time)
     time = time + dt.timedelta(hours=23)
     print('TIME = ', time)
+
+    entry_time = time + dt.timedelta(hours=1)
+    exit_time = time + dt.timedelta(hours=hold)
+
+    if entry_time not in asset_hourly_data.index or exit_time not in asset_hourly_data.index:
+            return np.nan, None, None, None, None, None
+    
     entry_time = asset_hourly_data.loc[time + dt.timedelta(hours=1)].name
     print("Entry Time = ", entry_time)
     entry_price = asset_hourly_data['open'].loc[entry_time]
@@ -93,8 +100,8 @@ def getReturns(position, time, hold, stop_loss):
 strategy_returns  = pd.DataFrame(columns=['entry time', 'exit time', 'entry price', 'exit price', 'position', 'returns'])
 exit_time = signals['timestamp'].loc[0]
 
-hold =  480 # HOLDING PERIOD IN HOURS
-stop_loss = 0.08 # STOP LOSS
+hold =  96 # HOLDING PERIOD IN HOURS
+stop_loss = 0.1 # STOP LOSS
 print("exit time initial = ", exit_time)
 
 for day in signals.index:
@@ -105,10 +112,13 @@ for day in signals.index:
     price = signals['Price'].loc[day]
     print("Price at the time = ", price)
 
-    if pd.to_datetime(time) == dt.datetime(2025, 5 ,1):
+    if pd.to_datetime(time) == dt.datetime(2025, 5 ,1): # STOP ITERATING AT THIS DATE
           break
-
-    if pd.to_datetime(time) > dt.datetime(2020, 1 ,29) and pd.to_datetime(time) >= pd.to_datetime(exit_time):
+    
+    if exit_time is None:
+            continue
+    
+    if pd.to_datetime(time) > dt.datetime(2024, 2 ,1) and pd.to_datetime(time) >= pd.to_datetime(exit_time):
 
         if signal == 1:
             returns, entry_time, entry_price, exit_time, exit_price, signal = getReturns(signal, time, hold, stop_loss)
@@ -178,6 +188,9 @@ gross_profit = strategy_returns.loc[strategy_returns['returns'] > 0, 'returns'].
 gross_loss = abs(strategy_returns.loc[strategy_returns['returns'] <= 0, 'returns'].sum())
 profit_factor = gross_profit / gross_loss if gross_loss != 0 else np.nan
 
+
+
+cumulative_compounded = (1 + strategy_returns['returns']).cumprod() - 1 # MAKE SURE IT FITS THE PLOT FROM 0 RETURNS
 # --- Crear figura interactiva ---
 
 fig = go.Figure()
@@ -239,7 +252,7 @@ metrics_text = (
     f"Compounded Returns: {compounded_returns:.2%}\n"
     f"Simple Returns: {simple_returns:.2%}\n"
     f"Max Drawdown: {max_drawdown:.2%}\n"
-    f"Sharpe Ratio: {sharpe_ratio:.2f}\n"
+    f"Sharpe Ratio: {sharpe_ratio}\n"
     f"Win Rate: {win_rate:.2%}\n"
     f"Profit Factor: {profit_factor:.2f}"
 )
